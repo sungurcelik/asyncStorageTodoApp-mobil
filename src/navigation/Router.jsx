@@ -7,6 +7,7 @@ import HomeScreen from '../screens/HomeScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import TodoScreen from '../screens/TodoScreen';
 import {getItem} from '../utils/asyncStorage';
+import DetailTodo from '../screens/DetailTodo';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,31 +31,10 @@ const Router = () => {
     return null;
   }
 
-  if (showOnboarding) {
-    return (
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="Onboarding">
-          <Stack.Screen
-            name="Onboarding"
-            options={{headerShown: false}}
-            component={OnboardingScreen}
-          />
-          <Stack.Screen
-            name="Home"
-            options={{headerShown: false}}
-            component={HomeScreen}
-          />
-          <Stack.Screen
-            name="Todo"
-            options={{headerShown: false}}
-            component={TodoScreen}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    );
-  } else {
+  return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
+      <Stack.Navigator
+        initialRouteName={showOnboarding ? 'Onboarding' : 'Home'}>
         <Stack.Screen
           name="Onboarding"
           options={{headerShown: false}}
@@ -70,9 +50,14 @@ const Router = () => {
           options={{headerShown: false}}
           component={TodoScreen}
         />
+        <Stack.Screen
+          name="Detail"
+          options={{headerShown: false}}
+          component={DetailTodo}
+        />
       </Stack.Navigator>
-    </NavigationContainer>;
-  }
+    </NavigationContainer>
+  );
 };
 
 export default Router;

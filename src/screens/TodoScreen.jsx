@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
   Alert,
+  ScrollView,
 } from 'react-native';
 import {useEffect, useState} from 'react';
 import uuid from 'react-native-uuid';
@@ -19,12 +20,20 @@ import {
   TickCircle,
   Trash,
 } from 'iconsax-react-native';
+import {useNavigation} from '@react-navigation/native';
+import * as Yup from 'yup';
+
+const todoScheme = Yup.object().shape({
+  text: Yup.string().required('Todo Kısmı Boş Bırakılamaz!'),
+});
 
 const TodoScreen = () => {
+  const navigation = useNavigation();
   // STATES
   const [todo, setTodo] = useState('');
   const [todos, setTodos] = useState([]);
   // ASYNC STORAGE
+
   const saveTodos = async saveTodo => {
     try {
       // AS ekle yaparken setItem
@@ -54,9 +63,11 @@ const TodoScreen = () => {
   };
 
   const completeTodo = async id => {
-    const updatedTodos = todos.map(item => {
-      item.id === id ? {...item, completed: !item.completed} : item;
-    });
+    const updatedTodos = todos.map(item =>
+      item.id === id ? {...item, completed: !item.completed} : item,
+    );
+    setTodos(updatedTodos);
+    saveTodos(updatedTodos);
   };
 
   const updateTodos = id => {
@@ -88,9 +99,17 @@ const TodoScreen = () => {
 
   // FUNCS
   const addTodo = () => {
-    const updatedTodos = [...todos, {id: uuid.v4(), text: todo}];
-    setTodos(updatedTodos);
-    saveTodos(updatedTodos);
+    try {
+      todoScheme.validateSync({text: todo});
+      const updatedTodos = [
+        ...todos,
+        {id: uuid.v4(), text: todo, completed: false},
+      ];
+      setTodos(updatedTodos);
+      saveTodos(updatedTodos);
+    } catch (error) {
+      Alert.alert('Hata', error.errors[0]);
+    }
   };
 
   // console.log(todos)
@@ -98,12 +117,13 @@ const TodoScreen = () => {
     <LinearGradient colors={['#fef3c7', '#a78bfa']} style={styles.container}>
       <SafeAreaView>
         {/* ADD TODO PART */}
-        <Text style={styles.headerText}>T-DO LIST</Text>
+        <Text style={styles.headerText}>TO-DO LIST</Text>
         <View style={styles.inputContainer}>
           <TextInput
             onChangeText={text => setTodo(text)}
-            placeholder="Type a Todo"
+            placeholder="Todo Giriniz.."
             style={styles.input}
+            value={todo}
           />
           <TouchableOpacity
             onPress={addTodo}
@@ -118,13 +138,16 @@ const TodoScreen = () => {
           keyExtractor={item => item?.id?.toString()}
           renderItem={({item}) => (
             <View style={styles.todoItem}>
-              <Text
-                style={[
-                  styles.todoText,
-                  item.completed && styles.completedText,
-                ]}>
-                {item?.text}
-              </Text>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Detail', {todo: item})}>
+                <Text
+                  style={[
+                    styles.todoText,
+                    item.completed && styles.completedText,
+                  ]}>
+                  {item?.text}
+                </Text>
+              </TouchableOpacity>
 
               <View style={{flexDirection: 'row'}}>
                 <View style={styles.buttonContainer}>
@@ -133,9 +156,13 @@ const TodoScreen = () => {
                     style={[styles.button, styles.completeButton]}>
                     <Text style={styles.buttonText}>
                       {item.completed ? (
-                        <CloseCircle size="24" color="#000000" />
+                        <CloseCircle size="24" color="#000" />
                       ) : (
-                        <TickCircle size="27" color="#000000" />
+                        <TickCircle
+                          size="27"
+                          color="#ff8a65"
+                          variant="Broken"
+                        />
                       )}
                     </Text>
                   </TouchableOpacity>
@@ -145,7 +172,7 @@ const TodoScreen = () => {
                     onPress={() => deleteTodo(item?.id)}
                     style={[styles.button, styles.deleteButton]}>
                     <Text style={styles.buttonText}>
-                      <Trash size="32" color="#dce775" />
+                      <Trash size="32" color="#ff8a65" variant="Broken" />
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -155,7 +182,7 @@ const TodoScreen = () => {
                     onPress={() => updateTodos(item?.id)}
                     style={[styles.button, styles.updateButton]}>
                     <Text style={styles.buttonText}>
-                      <Edit2 size="32" color="#dce775" />
+                      <Edit2 size="32" color="#ff8a65" variant="Broken" />
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -218,13 +245,21 @@ const styles = StyleSheet.create({
     textDecorationLine: 'none',
     fontSize: 18,
     fontWeight: 'bold',
+    marginTop: 12,
   },
   completedText: {
     textDecorationLine: 'line-through',
     color: 'gray',
-    fontSize: 15
+    fontSize: 15,
   },
-  completeButton:{
-    padding: 10
-  }
+  completeButton: {
+    marginTop: 3,
+    padding: 10,
+  },
+  tebrikler: {
+    fontSize: 18,
+    color: 'green',
+    marginVertical: 20,
+    textAlign: 'center',
+  },
 });
